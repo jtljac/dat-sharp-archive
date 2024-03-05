@@ -5,7 +5,6 @@
         <RootNamespace>dat_sharp_archive</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <OutputType>Exe</OutputType>
     </PropertyGroup>
 
 </Project>

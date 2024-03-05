@@ -99,11 +99,11 @@ public class DatArchiveReader {
     /// </exception>
     /// <exception cref="BadArchiveException">Thrown if the file entry does not belong to this archive</exception>
     public Stream GetFile(DatArchiveEntry fileEntry) {
-        if (fileEntry.archive != this)
+        if (fileEntry.Archive != this)
             throw new BadArchiveException("That fileEntry does not belong to this Archive");
 
-        var stream = _archiveFile.CreateViewStream((long) fileEntry.dataStart, (long) fileEntry.sizeInArchive);
-        return fileEntry.compressionMethod switch {
+        var stream = _archiveFile.CreateViewStream((long) fileEntry.DataStart, (long) fileEntry.SizeInArchive);
+        return fileEntry.CompressionMethod switch {
             CompressionMethod.None => stream,
             CompressionMethod.ZLib => new ZLibStream(stream, CompressionMode.Decompress, false),
             CompressionMethod.Brotli => new BrotliStream(stream, CompressionMode.Decompress, false),

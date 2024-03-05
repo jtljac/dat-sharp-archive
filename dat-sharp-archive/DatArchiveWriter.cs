@@ -52,34 +52,34 @@ public class DatArchiveWriter {
     /// <param name="fileEntry">An entry for the newly added file</param>
     /// <returns>The <see cref="DatArchiveWriter"/> instance</returns>
     public DatArchiveWriter AddFileEntry(Stream fileStream, DatArchiveEntry fileEntry) {
-        fileEntry.dataStart = (ulong) _destFileStream.BaseStream.Position;
+        fileEntry.DataStart = (ulong) _destFileStream.BaseStream.Position;
         var crcBuilder = new Crc32();
         // 4 KiB buffer
         var buffer = new byte[4096];
         int read;
 
         // Select stream to write with for compression
-        var stream = fileEntry.compressionMethod switch {
+        var stream = fileEntry.CompressionMethod switch {
             CompressionMethod.None => _destFileStream.BaseStream,
             CompressionMethod.ZLib => new ZLibStream(_destFileStream.BaseStream, CompressionMode.Compress, true),
             CompressionMethod.Brotli => new BrotliStream(_destFileStream.BaseStream, CompressionMode.Compress, true),
-            _ => throw new IndexOutOfRangeException(nameof(fileEntry.compressionMethod))
+            _ => throw new IndexOutOfRangeException(nameof(fileEntry.CompressionMethod))
         };
 
         while ((read = fileStream.Read(buffer, 0, buffer.Length)) != 0) {
-            fileEntry.size += (ulong) read;
+            fileEntry.Size += (ulong) read;
             crcBuilder.TransformBlock(buffer, 0, read, null, 0);
             stream.Write(buffer, 0, read);
         }
 
         // Only dispose if it's not the default stream
-        if (fileEntry.compressionMethod != CompressionMethod.None) stream.Dispose();
+        if (fileEntry.CompressionMethod != CompressionMethod.None) stream.Dispose();
 
         crcBuilder.TransformFinalBlock(buffer, 0, 0);
-        fileEntry.crc32 = crcBuilder.Hash ?? [0, 0, 0, 0];
+        fileEntry.Crc32 = crcBuilder.Hash ?? [0, 0, 0, 0];
 
-        fileEntry.dataEnd = (ulong) _destFileStream.BaseStream.Position;
-        _entries[fileEntry.name] = fileEntry;
+        fileEntry.DataEnd = (ulong) _destFileStream.BaseStream.Position;
+        _entries[fileEntry.Name] = fileEntry;
 
         return this;
     }
@@ -112,17 +112,17 @@ public class DatArchiveWriter {
     private void WriteFileTable() {
         foreach (var entry in _entries.Values) {
             // Name
-            var nameBytes = Encoding.UTF8.GetBytes(entry.name);
+            var nameBytes = Encoding.UTF8.GetBytes(entry.Name);
             _destFileStream.Write((ushort) nameBytes.Length);
             _destFileStream.Write(nameBytes);
 
-            _destFileStream.Write((byte) entry.compressionMethod);
-            _destFileStream.Write((byte) entry.flags);
+            _destFileStream.Write((byte) entry.CompressionMethod);
+            _destFileStream.Write((byte) entry.Flags);
 
-            _destFileStream.Write(entry.crc32);
-            _destFileStream.Write(entry.size);
-            _destFileStream.Write(entry.dataStart);
-            _destFileStream.Write(entry.dataEnd);
+            _destFileStream.Write(entry.Crc32);
+            _destFileStream.Write(entry.Size);
+            _destFileStream.Write(entry.DataStart);
+            _destFileStream.Write(entry.DataEnd);
         }
     }
 
